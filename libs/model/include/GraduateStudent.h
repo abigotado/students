@@ -7,7 +7,7 @@ namespace university {
 
 /**
  * @struct DiplomaProject
- * @brief Represents the diploma project of a graduate student.
+ * @brief Представляет дипломный проект выпускника.
  */
 struct DiplomaProject {
     std::string topic;
@@ -19,41 +19,41 @@ struct DiplomaProject {
 
 /**
  * @class GraduateStudent
- * @brief Represents a graduate student.
+ * @brief Представляет выпускника.
  */
 class GraduateStudent : public Student {
 public:
     /**
-     * @brief Constructs a new GraduateStudent object.
-     * @param name The student's full name.
-     * @param groupIndex The student's group index.
-     * @param departmentNumber The student's department number.
-     * @param diplomaProject The student's diploma project details.
+     * @brief Конструирует новый объект GraduateStudent.
+     * @param name Полное имя студента.
+     * @param groupIndex Индекс группы студента.
+     * @param departmentNumber Номер кафедры студента.
+     * @param diplomaProject Детали дипломного проекта студента.
      */
     GraduateStudent(const std::string& name, const std::string& groupIndex, int departmentNumber,
                     const DiplomaProject& diplomaProject);
 
     /**
-     * @brief Gets the student's category.
-     * @return Always returns StudentCategory::GRADUATE.
+     * @brief Получает категорию студента.
+     * @return Всегда возвращает StudentCategory::GRADUATE.
      */
     [[nodiscard]] StudentCategory getCategory() const override;
 
     /**
-     * @brief Prints the student's information to the given output stream.
-     * @param os The output stream to write to.
+     * @brief Выводит информацию о студенте в заданный поток вывода.
+     * @param os Поток вывода для записи.
      */
     void printInfo(std::ostream& os) const override;
 
     /**
-     * @brief Gets the student's diploma project information.
-     * @return A const reference to the diploma project structure.
+     * @brief Получает информацию о дипломном проекте студента.
+     * @return Константная ссылка на структуру дипломного проекта.
      */
     [[nodiscard]] const DiplomaProject& getDiplomaProject() const;
 
     /**
-     * @brief Sets the student's diploma project information.
-     * @param diplomaProject The new diploma project details.
+     * @brief Устанавливает информацию о дипломном проекте студента.
+     * @param diplomaProject Новые детали дипломного проекта.
      */
     void setDiplomaProject(const DiplomaProject& diplomaProject);
 

@@ -9,7 +9,7 @@ namespace university {
 
 /**
  * @enum StudentCategory
- * @brief Defines the category of a student.
+ * @brief Определяет категорию студента.
  */
 enum class StudentCategory {
     JUNIOR,
@@ -19,45 +19,63 @@ enum class StudentCategory {
 
 /**
  * @class Student
- * @brief An abstract base class representing a student.
+ * @brief Абстрактный базовый класс, представляющий студента.
  *
- * This class provides a common interface for different types of students
- * in the university. It stores common information such as name, group index,
- * and department number.
+ * Этот класс предоставляет общий интерфейс для различных типов студентов
+ * в университете. Он хранит общую информацию, такую как имя, индекс группы
+ * и номер кафедры.
  */
 class Student {
 public:
     /**
-     * @brief Constructs a new Student object.
-     * @param name The student's full name and initials.
-     * @param groupIndex The index of the student's group.
-     * @param departmentNumber The number of the student's department.
-     * @throw std::invalid_argument if name is empty or departmentNumber is negative.
+     * @brief Конструирует новый объект Student.
+     * @param name Полное имя и инициалы студента.
+     * @param groupIndex Индекс группы студента.
+     * @param departmentNumber Номер кафедры студента.
+     * @throw std::invalid_argument если имя пустое или номер кафедры отрицательный.
      */
     Student(const std::string& name, const std::string& groupIndex, int departmentNumber);
 
     /**
-     * @brief Virtual destructor.
+     * @brief Виртуальный деструктор.
      */
     virtual ~Student() = default;
 
     /**
-     * @brief Gets the student's category.
-     * @return The category of the student.
+     * @brief Получает категорию студента.
+     * @return Категория студента.
      */
     [[nodiscard]] virtual StudentCategory getCategory() const = 0;
 
     /**
-     * @brief Prints the student's information to the given output stream.
-     * @param os The output stream to write to.
+     * @brief Выводит информацию о студенте в заданный поток вывода.
+     * @param os Поток вывода для записи.
      */
     virtual void printInfo(std::ostream& os) const;
 
     /**
-     * @brief Changes the student's group index.
-     * @param newGroupIndex The new group index.
+     * @brief Изменяет индекс группы студента.
+     * @param newGroupIndex Новый индекс группы.
      */
     void setGroupIndex(const std::string& newGroupIndex);
+
+    /**
+     * @brief Получает имя студента.
+     * @return Имя студента.
+     */
+    [[nodiscard]] const std::string& getName() const { return name_; }
+
+    /**
+     * @brief Получает индекс группы студента.
+     * @return Индекс группы студента.
+     */
+    [[nodiscard]] const std::string& getGroupIndex() const { return groupIndex_; }
+
+    /**
+     * @brief Получает номер кафедры студента.
+     * @return Номер кафедры студента.
+     */
+    [[nodiscard]] int getDepartmentNumber() const { return departmentNumber_; }
 
 protected:
     std::string name_;

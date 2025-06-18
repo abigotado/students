@@ -13,17 +13,16 @@ namespace university {
 
 /**
  * @class HashTable
- * @brief A hash table container mapping keys to values.
+ * @brief Хеш-таблица, отображающая ключи в значения.
  *
- * This implementation uses linear probing for collision resolution.
- * The table automatically resizes when the load factor exceeds a threshold.
- * The choice of iterator is a forward iterator because a hash table is an
- * unordered container. A forward iterator provides the necessary functionality
- * to traverse all elements without implying any order, which is a perfect
- * match for the container's characteristics.
+ * Эта реализация использует линейное пробирование для разрешения коллизий.
+ * Таблица автоматически изменяет размер, когда коэффициент загрузки превышает пороговое значение.
+ * Выбор итератора - прямой итератор, потому что хеш-таблица является неупорядоченным контейнером.
+ * Прямой итератор предоставляет необходимую функциональность для обхода всех элементов
+ * без подразумевания какого-либо порядка, что идеально подходит для характеристик контейнера.
  *
- * @tparam Key The type of the keys.
- * @tparam Value The type of the values.
+ * @tparam Key Тип ключей.
+ * @tparam Value Тип значений.
  */
 template<typename Key, typename Value>
 class HashTable {
@@ -38,7 +37,7 @@ private:
         Entry(Entry&& other) noexcept = default;
         Entry& operator=(Entry&& other) noexcept = default;
 
-        // Deleted copy constructor and assignment operator
+        // Удалённые конструктор копирования и оператор присваивания
         Entry(const Entry&) = delete;
         Entry& operator=(const Entry&) = delete;
     };
@@ -81,38 +80,38 @@ public:
     };
 
     /**
-     * @brief Provides an iterator to the beginning of the container.
-     * @return An iterator to the first element.
+     * @brief Предоставляет итератор к началу контейнера.
+     * @return Итератор к первому элементу.
      */
     Iterator begin() { return Iterator(table_.begin(), table_.end()); }
 
     /**
-     * @brief Provides an iterator to the end of the container.
-     * @return An iterator to the element following the last element.
+     * @brief Предоставляет итератор к концу контейнера.
+     * @return Итератор к элементу, следующему за последним.
      */
     Iterator end() { return Iterator(table_.end(), table_.end()); }
 
     /**
-     * @brief Provides an iterator to the beginning of the container (const version).
-     * @return An iterator to the first element.
+     * @brief Предоставляет итератор к началу контейнера (const версия).
+     * @return Итератор к первому элементу.
      */
     ConstIterator begin() const { return ConstIterator(table_.begin(), table_.end()); }
 
     /**
-     * @brief Provides an iterator to the end of the container (const version).
-     * @return An iterator to the element following the last element.
+     * @brief Предоставляет итератор к концу контейнера (const версия).
+     * @return Итератор к элементу, следующему за последним.
      */
     ConstIterator end() const { return ConstIterator(table_.end(), table_.end()); }
 
     /**
-     * @brief Provides an iterator to the beginning of the container (const version).
-     * @return An iterator to the first element.
+     * @brief Предоставляет итератор к началу контейнера (const версия).
+     * @return Итератор к первому элементу.
      */
     ConstIterator cbegin() const { return ConstIterator(table_.cbegin(), table_.cend()); }
 
     /**
-     * @brief Provides an iterator to the end of the container (const version).
-     * @return An iterator to the element following the last element.
+     * @brief Предоставляет итератор к концу контейнера (const версия).
+     * @return Итератор к элементу, следующему за последним.
      */
     ConstIterator cend() const { return ConstIterator(table_.cend(), table_.cend()); }
 
@@ -122,9 +121,9 @@ private:
     float maxLoadFactor_ = 0.7f;
 
     /**
-     * @brief Computes the hash of a key.
-     * @param key The key to hash.
-     * @return The hash value.
+     * @brief Вычисляет хеш ключа.
+     * @param key Ключ для хеширования.
+     * @return Значение хеша.
      */
     size_t hash(const Key& key, size_t tableSize) const {
         if (tableSize == 0) {
@@ -134,7 +133,7 @@ private:
     }
 
     /**
-     * @brief Resizes the hash table to twice its current size or to a minimum size if it's empty.
+     * @brief Изменяет размер хеш-таблицы до удвоенного текущего размера или до минимального размера, если она пуста.
      */
     void rehash() {
         size_t newSize = table_.empty() ? 16 : table_.size() * 2;
@@ -157,19 +156,19 @@ private:
 
 public:
     /**
-     * @brief Constructs a new HashTable object.
-     * @param initialCapacity The initial capacity of the hash table.
+     * @brief Конструирует новый объект HashTable.
+     * @param initialCapacity Начальная ёмкость хеш-таблицы.
      */
     explicit HashTable(size_t initialCapacity = 16) {
         table_.resize(initialCapacity);
     }
 
     /**
-     * @brief Inserts a key-value pair into the hash table.
-     * @param key The key to insert.
-     * @param value The value to associate with the key.
-     * @return True if the insertion was successful, false if the key already exists.
-     * @throw std::runtime_error if the hash table is full and cannot be resized.
+     * @brief Вставляет пару ключ-значение в хеш-таблицу.
+     * @param key Ключ для вставки.
+     * @param value Значение, связанное с ключом.
+     * @return True, если вставка была успешной, false, если ключ уже существует.
+     * @throw std::runtime_error если хеш-таблица заполнена и не может быть изменена.
      */
     bool insert(const Key& key, Value value) {
         if (table_.empty() || size_ >= table_.size() * maxLoadFactor_) {
@@ -196,7 +195,7 @@ public:
                 return true;
             }
             if (table_[index].key == key && !table_[index].deleted) {
-                return false; // Key already exists
+                return false; // Ключ уже существует
             }
             index = (index + 1) % table_.size();
         } while (index != startIndex);
@@ -210,13 +209,13 @@ public:
              return true;
         }
 
-        throw std::runtime_error("Hash table is full.");
+        throw std::runtime_error("Хеш-таблица заполнена.");
     }
 
     /**
-     * @brief Finds the value associated with a given key.
-     * @param key The key to find.
-     * @return An optional containing a reference wrapper to the value if the key is found, otherwise an empty optional.
+     * @brief Находит значение, связанное с данным ключом.
+     * @param key Ключ для поиска.
+     * @return Optional, содержащий ссылку на значение, если ключ найден, иначе пустой optional.
      */
     std::optional<std::reference_wrapper<Value>> find(const Key& key) {
         if (empty()) return std::nullopt;
@@ -224,7 +223,7 @@ public:
         size_t startIndex = index;
         do {
             if (!table_[index].occupied && !table_[index].deleted) {
-                return std::nullopt; // Key not found
+                return std::nullopt; // Ключ не найден
             }
             if (table_[index].key == key && !table_[index].deleted) {
                 return table_[index].value;
@@ -235,9 +234,9 @@ public:
     }
 
     /**
-     * @brief Finds the value associated with a given key (const version).
-     * @param key The key to find.
-     * @return An optional containing a const reference wrapper to the value if the key is found, otherwise an empty optional.
+     * @brief Находит значение, связанное с данным ключом (const версия).
+     * @param key Ключ для поиска.
+     * @return Optional, содержащий const ссылку на значение, если ключ найден, иначе пустой optional.
      */
     std::optional<std::reference_wrapper<const Value>> find(const Key& key) const {
         if (empty()) return std::nullopt;
@@ -245,7 +244,7 @@ public:
         size_t startIndex = index;
         do {
             if (!table_[index].occupied && !table_[index].deleted) {
-                return std::nullopt; // Key not found
+                return std::nullopt; // Ключ не найден
             }
             if (table_[index].key == key && !table_[index].deleted) {
                 return table_[index].value;
@@ -256,9 +255,9 @@ public:
     }
 
     /**
-     * @brief Removes a key-value pair from the hash table.
-     * @param key The key to remove.
-     * @return True if the removal was successful, false if the key was not found.
+     * @brief Удаляет пару ключ-значение из хеш-таблицы.
+     * @param key Ключ для удаления.
+     * @return True, если удаление было успешным, false, если ключ не найден.
      */
     bool remove(const Key& key) {
         if (empty()) return false;
@@ -266,7 +265,7 @@ public:
         size_t startIndex = index;
         do {
             if (!table_[index].occupied) {
-                return false; // Key not found
+                return false; // Ключ не найден
             }
             if (table_[index].key == key && !table_[index].deleted) {
                 table_[index].deleted = true;
@@ -279,16 +278,16 @@ public:
     }
 
     /**
-     * @brief Gets the number of elements in the hash table.
-     * @return The number of elements.
+     * @brief Получает количество элементов в хеш-таблице.
+     * @return Количество элементов.
      */
     [[nodiscard]] size_t size() const {
         return size_;
     }
 
     /**
-     * @brief Checks if the hash table is empty.
-     * @return True if the hash table is empty, false otherwise.
+     * @brief Проверяет, пуста ли хеш-таблица.
+     * @return True, если хеш-таблица пуста, false в противном случае.
      */
     [[nodiscard]] bool empty() const {
         return size_ == 0;

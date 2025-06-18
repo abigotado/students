@@ -3,55 +3,99 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <map>
 #include "Student.h"
 #include "HashTable.h"
+#include "SeniorStudent.h"
+#include "GraduateStudent.h"
 
 namespace university {
 
 class View {
 public:
     /**
-     * @brief Displays the main menu and gets the user's choice.
-     * @return The user's menu choice.
+     * @brief Отображает главное меню и получает выбор пользователя.
+     * @return Выбор пользователя из меню.
      */
     int showMenu();
 
     /**
-     * @brief Prompts the user for a student ID.
-     * @return The student ID entered by the user.
+     * @brief Запрашивает у пользователя ID студента.
+     * @return ID студента, введённый пользователем.
      */
     int getStudentId();
 
     /**
-     * @brief Prompts the user for information to create a new student.
-     * @return A unique_ptr to the newly created student.
+     * @brief Запрашивает у пользователя информацию для создания нового студента.
+     * @return unique_ptr к новому студенту.
      */
     std::unique_ptr<Student> getNewStudentInfo();
 
     /**
-     * @brief Displays the information of a single student.
-     * @param student The student to display.
+     * @brief Отображает информацию об одном студенте.
+     * @param student Студент для отображения.
      */
     void showStudentInfo(const Student& student);
 
     /**
-     * @brief Displays the contents of the student table.
-     * @param table The hash table of students.
+     * @brief Отображает содержимое таблицы студентов.
+     * @param table Хеш-таблица студентов.
      */
     void showStudentTable(const HashTable<int, std::unique_ptr<Student>>& table);
 
     /**
-     * @brief Displays a message to the user.
-     * @param message The message to display.
+     * @brief Отображает сообщение пользователю.
+     * @param message Сообщение для отображения.
      */
     void showMessage(const std::string& message);
 
+    /**
+     * @brief Запрашивает новый индекс группы.
+     * @return Новый индекс группы.
+     */
+    std::string getNewGroupIndex();
+
+    /**
+     * @brief Запрашивает новую категорию студента.
+     * @return Новая категория (1: Младшекурсник, 2: Старшекурсник, 3: Выпускник).
+     */
+    int getNewCategory();
+
+    /**
+     * @brief Отображает оценки студента.
+     * @param student Студент, чьи оценки нужно отобразить.
+     */
+    void showStudentGrades(const Student& student);
+
+    /**
+     * @brief Отображает средние оценки по группам.
+     * @param averages Карта индекса группы к средней оценке.
+     */
+    void showAverageGradesByGroup(const std::map<std::string, double>& averages);
+
+    /**
+     * @brief Запрашивает информацию о новой исследовательской работе.
+     * @return Детали новой исследовательской работы.
+     */
+    ResearchWork getNewResearchWork();
+
+    /**
+     * @brief Запрашивает информацию о новом дипломном проекте.
+     * @return Детали нового дипломного проекта.
+     */
+    DiplomaProject getNewDiplomaProject();
+
 private:
     /**
-     * @brief Prompts for and reads common student information.
-     * @param name Reference to store the student's name.
-     * @param groupIndex Reference to store the group index.
-     * @param departmentNumber Reference to store the department number.
+     * @brief Очищает буфер ввода.
+     */
+    void clearInputBuffer();
+
+    /**
+     * @brief Запрашивает и считывает общую информацию о студенте.
+     * @param name Ссылка для хранения имени студента.
+     * @param groupIndex Ссылка для хранения индекса группы.
+     * @param departmentNumber Ссылка для хранения номера кафедры.
      */
     void promptForCommonInfo(std::string& name, std::string& groupIndex, int& departmentNumber);
 };

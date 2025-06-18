@@ -10,7 +10,7 @@
 
 using namespace university;
 
-// --- Student Tests ---
+// --- Тесты студентов ---
 
 TEST(JuniorStudentTest, ConstructorAndGetters) {
     std::vector<int> grades = {5, 4, 5};
@@ -36,32 +36,32 @@ TEST(JuniorStudentTest, ThrowsOnTooManyGrades) {
 
 TEST(SeniorStudentTest, ConstructorAndGetters) {
     std::vector<int> grades = {5, 4, 5, 4};
-    ResearchWork work = {"AI in medicine", "Lab 101", 5, 5};
+    ResearchWork work = {"AI в медицине", "Лаборатория 101", 5, 5};
     SeniorStudent student("Smirnov A.A.", "IU6-41M", 104, grades, work);
 
     EXPECT_EQ(student.getCategory(), StudentCategory::SENIOR);
     EXPECT_EQ(student.getSessionGrades(), grades);
-    EXPECT_EQ(student.getResearchWork().topic, "AI in medicine");
+    EXPECT_EQ(student.getResearchWork().topic, "AI в медицине");
 }
 
 TEST(GraduateStudentTest, ConstructorAndGetters) {
-    DiplomaProject project = {"Blockchain voting", "Tech Park", 5, 5, 5};
+    DiplomaProject project = {"Блокчейн голосование", "Технопарк", 5, 5, 5};
     GraduateStudent student("Kuznetsov K.K.", "IU5-81M", 105, project);
 
     EXPECT_EQ(student.getCategory(), StudentCategory::GRADUATE);
-    EXPECT_EQ(student.getDiplomaProject().topic, "Blockchain voting");
+    EXPECT_EQ(student.getDiplomaProject().topic, "Блокчейн голосование");
 }
 
-// --- HashTable Tests ---
+// --- Тесты HashTable ---
 
 TEST(HashTableTest, InsertAndFind) {
     HashTable<int, std::string> table;
-    ASSERT_TRUE(table.insert(1, "one"));
-    ASSERT_TRUE(table.insert(2, "two"));
+    ASSERT_TRUE(table.insert(1, "один"));
+    ASSERT_TRUE(table.insert(2, "два"));
     
     auto found = table.find(1);
     ASSERT_TRUE(found.has_value());
-    EXPECT_EQ(found->get(), "one");
+    EXPECT_EQ(found->get(), "один");
 
     auto notFound = table.find(3);
     EXPECT_FALSE(notFound.has_value());
@@ -69,26 +69,26 @@ TEST(HashTableTest, InsertAndFind) {
 
 TEST(HashTableTest, InsertDuplicate) {
     HashTable<int, std::string> table;
-    ASSERT_TRUE(table.insert(1, "one"));
-    ASSERT_FALSE(table.insert(1, "another_one"));
+    ASSERT_TRUE(table.insert(1, "один"));
+    ASSERT_FALSE(table.insert(1, "другой_один"));
     EXPECT_EQ(table.size(), 1);
 }
 
 TEST(HashTableTest, Remove) {
     HashTable<int, std::string> table;
-    table.insert(1, "one");
-    table.insert(2, "two");
+    table.insert(1, "один");
+    table.insert(2, "два");
 
     ASSERT_TRUE(table.remove(1));
     EXPECT_EQ(table.size(), 1);
     EXPECT_FALSE(table.find(1).has_value());
 
-    ASSERT_FALSE(table.remove(3)); // Not in table
+    ASSERT_FALSE(table.remove(3)); // Нет в таблице
     EXPECT_EQ(table.size(), 1);
 }
 
 TEST(HashTableTest, Rehash) {
-    HashTable<int, int> table(4); // Small initial size
+    HashTable<int, int> table(4); // Маленький начальный размер
     for (int i = 0; i < 10; ++i) {
         ASSERT_TRUE(table.insert(i, i * 10));
     }
@@ -103,12 +103,12 @@ TEST(HashTableTest, Rehash) {
 
 TEST(HashTableTest, Iterator) {
     HashTable<int, std::string> table;
-    table.insert(1, "one");
-    table.insert(10, "ten");
-    table.insert(20, "twenty");
+    table.insert(1, "один");
+    table.insert(10, "десять");
+    table.insert(20, "двадцать");
 
     int count = 0;
-    std::map<int, std::string> expected = {{1, "one"}, {10, "ten"}, {20, "twenty"}};
+    std::map<int, std::string> expected = {{1, "один"}, {10, "десять"}, {20, "двадцать"}};
     for (auto it = table.begin(); it != table.end(); ++it) {
         auto pair = *it;
         EXPECT_EQ(expected.count(pair.first), 1);
@@ -121,8 +121,8 @@ TEST(HashTableTest, Iterator) {
 TEST(HashTableTest, StudentPolymorphism) {
     HashTable<int, std::unique_ptr<Student>> studentTable;
 
-    auto junior = std::make_unique<JuniorStudent>("Junior", "J1", 1, std::vector<int>{5});
-    auto senior = std::make_unique<SeniorStudent>("Senior", "S1", 2, std::vector<int>{4}, ResearchWork{"Topic", "Place", 5, 5});
+    auto junior = std::make_unique<JuniorStudent>("Младшекурсник", "J1", 1, std::vector<int>{5});
+    auto senior = std::make_unique<SeniorStudent>("Старшекурсник", "S1", 2, std::vector<int>{4}, ResearchWork{"Тема", "Место", 5, 5});
 
     studentTable.insert(101, std::move(junior));
     studentTable.insert(202, std::move(senior));
