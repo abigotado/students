@@ -8,94 +8,96 @@
 #include <thread>
 #include <mutex>
 
-namespace university {
-
-/**
- * @class Controller
- * @brief Управляет логикой приложения и взаимодействием с пользователем.
- *
- * Класс Controller координирует поток приложения,
- * обрабатывая пользовательский ввод из View и манипулируя данными в Model.
- */
-class Controller {
-public:
-    /**
-     * @brief Конструирует новый объект Controller.
-     */
-    Controller();
+namespace university
+{
 
     /**
-     * @brief Запускает основной цикл приложения.
+     * @class Controller
+     * @brief Управляет логикой приложения и взаимодействием с пользователем.
+     *
+     * Класс Controller координирует поток приложения,
+     * обрабатывая пользовательский ввод из View и манипулируя данными в Model.
      */
-    void run();
+    class Controller
+    {
+    public:
+        /**
+         * @brief Конструирует новый объект Controller.
+         */
+        Controller();
 
-private:
-    /**
-     * @brief Обрабатывает процесс добавления нового студента.
-     */
-    void addStudent();
+        /**
+         * @brief Запускает основной цикл приложения.
+         */
+        void run();
 
-    /**
-     * @brief Обрабатывает процесс поиска студента по ID.
-     */
-    void findStudent();
+    private:
+        /**
+         * @brief Обрабатывает процесс добавления нового студента.
+         */
+        void addStudent();
 
-    /**
-     * @brief Обрабатывает процесс удаления студента по ID.
-     */
-    void removeStudent();
+        /**
+         * @brief Обрабатывает процесс поиска студента по ID.
+         */
+        void findStudent();
 
-    /**
-     * @brief Обрабатывает отображение всех студентов в реестре.
-     */
-    void showAllStudents();
+        /**
+         * @brief Обрабатывает процесс удаления студента по ID.
+         */
+        void removeStudent();
 
-    /**
-     * @brief Обрабатывает изменение индекса группы студента.
-     */
-    void changeStudentGroup();
+        /**
+         * @brief Обрабатывает отображение всех студентов в реестре.
+         */
+        void showAllStudents();
 
-    /**
-     * @brief Обрабатывает перевод студента в другую категорию.
-     */
-    void transferStudent();
+        /**
+         * @brief Обрабатывает изменение индекса группы студента.
+         */
+        void changeStudentGroup();
 
-    /**
-     * @brief Обрабатывает отображение оценок студента.
-     */
-    void showStudentGrades();
+        /**
+         * @brief Обрабатывает перевод студента в другую категорию.
+         */
+        void transferStudent();
 
-    /**
-     * @brief Обрабатывает отображение средних оценок по группам.
-     */
-    void showAverageGradesByGroup();
+        /**
+         * @brief Обрабатывает отображение оценок студента.
+         */
+        void showStudentGrades();
 
-    /**
-     * @brief Обрабатывает изменение информации об исследовательской работе.
-     */
-    void modifyResearchWork();
+        /**
+         * @brief Обрабатывает отображение средних оценок по группам.
+         */
+        void showAverageGradesByGroup();
 
-    /**
-     * @brief Вычисляет средние оценки для каждой группы (однопоточная версия).
-     * @return Карта индекса группы к средней оценке.
-     */
-    std::map<std::string, double> calculateAverageGradesByGroup();
+        /**
+         * @brief Обрабатывает изменение информации об исследовательской работе.
+         */
+        void modifyResearchWork();
 
-    /**
-     * @brief Вычисляет средние оценки для каждой группы (многопоточная версия).
-     * @return Карта индекса группы к средней оценке.
-     */
-    std::map<std::string, double> calculateAverageGradesByGroupMultithreaded();
+        /**
+         * @brief Вычисляет средние оценки для каждой группы (однопоточная версия).
+         * @return Карта индекса группы к средней оценке.
+         */
+        std::map<std::string, double> calculateAverageGradesByGroup();
 
-    /**
-     * @brief Обрабатывает отображение средних оценок по группам с выбором режима.
-     */
-    void showAverageGradesByGroupWithChoice();
+        /**
+         * @brief Вычисляет средние оценки для каждой группы (многопоточная версия).
+         * @return Карта индекса группы к средней оценке.
+         */
+        std::map<std::string, double> calculateAverageGradesByGroupMultithreaded();
 
-    View view_;
-    HashTable<int, std::unique_ptr<Student>> studentTable_;
-    int nextId_ = 1; // Следующий доступный ID
-    mutable std::mutex tableMutex_; // Мьютекс для синхронизации доступа к таблице
-};
+        /**
+         * @brief Обрабатывает отображение средних оценок по группам с выбором режима.
+         */
+        void showAverageGradesByGroupWithChoice();
 
-} // namespace university 
+        View view_;
+        HashTable<int, std::unique_ptr<Student>> studentTable_;
+        int nextId_ = 1;                // Следующий доступный ID
+        mutable std::mutex tableMutex_; // Мьютекс для синхронизации доступа к таблице
+    };
+
+} // namespace university
