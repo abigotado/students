@@ -33,6 +33,14 @@ private:
         Value value;
         bool occupied = false;
         bool deleted = false;
+
+        Entry() = default;
+        Entry(Entry&& other) noexcept = default;
+        Entry& operator=(Entry&& other) noexcept = default;
+
+        // Deleted copy constructor and assignment operator
+        Entry(const Entry&) = delete;
+        Entry& operator=(const Entry&) = delete;
     };
 
 public:
@@ -40,69 +48,73 @@ public:
     public:
         using iterator_category = std::forward_iterator_tag;
         using value_type = std::pair<const Key, Value>;
-        using difference_type = std::ptrdiff_t;
-        using pointer = value_type*;
-        using reference = value_type&;
-
-        Iterator(typename std::vector<Entry>::iterator ptr, typename std::vector<Entry>::iterator end)
-            : current_(ptr), end_(end) {
-            advanceToNextValid();
-        }
-
-        reference operator*() const {
-            return *reinterpret_cast<pointer>(&*current_);
-        }
-
-        pointer operator->() const {
-            return reinterpret_cast<pointer>(&*current_);
-        }
-
-        Iterator& operator++() {
-            ++current_;
-            advanceToNextValid();
-            return *this;
-        }
-
-        Iterator operator++(int) {
-            Iterator tmp = *this;
-            ++(*this);
-            return tmp;
-        }
-
-        friend bool operator==(const Iterator& a, const Iterator& b) {
-            return a.current_ == b.current_;
-        }
-
-        friend bool operator!=(const Iterator& a, const Iterator& b) {
-            return a.current_ != b.current_;
-        }
+        
+        Iterator(typename std::vector<Entry>::iterator ptr, typename std::vector<Entry>::iterator end) : current_(ptr), end_(end) { advanceToNextValid(); }
+        
+        std::pair<const Key&, Value&> operator*() const { return {current_->key, current_->value}; }
+        Iterator& operator++() { ++current_; advanceToNextValid(); return *this; }
+        bool operator!=(const Iterator& other) const { return current_ != other.current_; }
+        bool operator==(const Iterator& other) const { return current_ == other.current_; }
 
     private:
-        void advanceToNextValid() {
-            while (current_ != end_ && (!current_->occupied || current_->deleted)) {
-                ++current_;
-            }
-        }
-
+        void advanceToNextValid() { while (current_ != end_ && (!current_->occupied || current_->deleted)) { ++current_; } }
         typename std::vector<Entry>::iterator current_;
         typename std::vector<Entry>::iterator end_;
+    };
+
+    class ConstIterator {
+    public:
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = std::pair<const Key, const Value>;
+
+        ConstIterator(typename std::vector<Entry>::const_iterator ptr, typename std::vector<Entry>::const_iterator end) : current_(ptr), end_(end) { advanceToNextValid(); }
+
+        std::pair<const Key&, const Value&> operator*() const { return {current_->key, current_->value}; }
+        ConstIterator& operator++() { ++current_; advanceToNextValid(); return *this; }
+        bool operator!=(const ConstIterator& other) const { return current_ != other.current_; }
+        bool operator==(const ConstIterator& other) const { return current_ == other.current_; }
+
+    private:
+        void advanceToNextValid() { while (current_ != end_ && (!current_->occupied || current_->deleted)) { ++current_; } }
+        typename std::vector<Entry>::const_iterator current_;
+        typename std::vector<Entry>::const_iterator end_;
     };
 
     /**
      * @brief Provides an iterator to the beginning of the container.
      * @return An iterator to the first element.
      */
-    Iterator begin() {
-        return Iterator(table_.begin(), table_.end());
-    }
+    Iterator begin() { return Iterator(table_.begin(), table_.end()); }
 
     /**
      * @brief Provides an iterator to the end of the container.
      * @return An iterator to the element following the last element.
      */
-    Iterator end() {
-        return Iterator(table_.end(), table_.end());
-    }
+    Iterator end() { return Iterator(table_.end(), table_.end()); }
+
+    /**
+     * @brief Provides an iterator to the beginning of the container (const version).
+     * @return An iterator to the first element.
+     */
+    ConstIterator begin() const { return ConstIterator(table_.begin(), table_.end()); }
+
+    /**
+     * @brief Provides an iterator to the end of the container (const version).
+     * @return An iterator to the element following the last element.
+     */
+    ConstIterator end() const { return ConstIterator(table_.end(), table_.end()); }
+
+    /**
+     * @brief Provides an iterator to the beginning of the container (const version).
+     * @return An iterator to the first element.
+     */
+    ConstIterator cbegin() const { return ConstIterator(table_.cbegin(), table_.cend()); }
+
+    /**
+     * @brief Provides an iterator to the end of the container (const version).
+     * @return An iterator to the element following the last element.
+     */
+    ConstIterator cend() const { return ConstIterator(table_.cend(), table_.cend()); }
 
 private:
     std::vector<Entry> table_;
@@ -114,11 +126,11 @@ private:
      * @param key The key to hash.
      * @return The hash value.
      */
-    size_t hash(const Key& key) const {
-        if (table_.empty()) {
+    size_t hash(const Key& key, size_t tableSize) const {
+        if (tableSize == 0) {
             return 0;
         }
-        return std::hash<Key>{}(key) % table_.size();
+        return std::hash<Key>{}(key) % tableSize;
     }
 
     /**
@@ -126,15 +138,21 @@ private:
      */
     void rehash() {
         size_t newSize = table_.empty() ? 16 : table_.size() * 2;
-        std::vector<Entry> oldTable = std::move(table_);
-        table_.assign(newSize, Entry{});
+        std::vector<Entry> newTable(newSize);
         size_ = 0;
-        for (auto& entry : oldTable) {
+        for (auto& entry : table_) {
             if (entry.occupied && !entry.deleted) {
-                // Use move on the value
-                insert(entry.key, std::move(entry.value));
+                size_t index = hash(entry.key, newSize);
+                while (newTable[index].occupied) {
+                    index = (index + 1) % newSize;
+                }
+                newTable[index].key = entry.key;
+                newTable[index].value = std::move(entry.value);
+                newTable[index].occupied = true;
+                size_++;
             }
         }
+        table_ = std::move(newTable);
     }
 
 public:
@@ -158,20 +176,39 @@ public:
             rehash();
         }
 
-        size_t index = hash(key);
+        size_t index = hash(key, table_.size());
         size_t startIndex = index;
 
+        size_t firstDeleted = -1;
+
         do {
-            if (!table_[index].occupied || table_[index].deleted) {
-                table_[index] = {key, std::move(value), true, false};
+            if (table_[index].deleted && firstDeleted == (size_t)-1) {
+                firstDeleted = index;
+            }
+
+            if (!table_[index].occupied) {
+                size_t insert_pos = (firstDeleted != (size_t)-1) ? firstDeleted : index;
+                table_[insert_pos].key = key;
+                table_[insert_pos].value = std::move(value);
+                table_[insert_pos].occupied = true;
+                table_[insert_pos].deleted = false;
                 size_++;
                 return true;
             }
-            if (table_[index].key == key) {
+            if (table_[index].key == key && !table_[index].deleted) {
                 return false; // Key already exists
             }
             index = (index + 1) % table_.size();
         } while (index != startIndex);
+        
+        if (firstDeleted != (size_t)-1) {
+             table_[firstDeleted].key = key;
+             table_[firstDeleted].value = std::move(value);
+             table_[firstDeleted].occupied = true;
+             table_[firstDeleted].deleted = false;
+             size_++;
+             return true;
+        }
 
         throw std::runtime_error("Hash table is full.");
     }
@@ -183,7 +220,7 @@ public:
      */
     std::optional<std::reference_wrapper<Value>> find(const Key& key) {
         if (empty()) return std::nullopt;
-        size_t index = hash(key);
+        size_t index = hash(key, table_.size());
         size_t startIndex = index;
         do {
             if (!table_[index].occupied && !table_[index].deleted) {
@@ -204,7 +241,7 @@ public:
      */
     std::optional<std::reference_wrapper<const Value>> find(const Key& key) const {
         if (empty()) return std::nullopt;
-        size_t index = hash(key);
+        size_t index = hash(key, table_.size());
         size_t startIndex = index;
         do {
             if (!table_[index].occupied && !table_[index].deleted) {
@@ -225,7 +262,7 @@ public:
      */
     bool remove(const Key& key) {
         if (empty()) return false;
-        size_t index = hash(key);
+        size_t index = hash(key, table_.size());
         size_t startIndex = index;
         do {
             if (!table_[index].occupied) {

@@ -110,7 +110,7 @@ TEST(HashTableTest, Iterator) {
     int count = 0;
     std::map<int, std::string> expected = {{1, "one"}, {10, "ten"}, {20, "twenty"}};
     for (auto it = table.begin(); it != table.end(); ++it) {
-        auto& pair = *it;
+        auto pair = *it;
         EXPECT_EQ(expected.count(pair.first), 1);
         EXPECT_EQ(expected[pair.first], pair.second);
         count++;
@@ -129,9 +129,9 @@ TEST(HashTableTest, StudentPolymorphism) {
 
     auto foundJunior = studentTable.find(101);
     ASSERT_TRUE(foundJunior.has_value());
-    EXPECT_EQ((*foundJunior)->get()->getCategory(), StudentCategory::JUNIOR);
+    EXPECT_EQ(foundJunior->get()->getCategory(), StudentCategory::JUNIOR);
 
     auto foundSenior = studentTable.find(202);
     ASSERT_TRUE(foundSenior.has_value());
-    EXPECT_EQ((*foundSenior)->get()->getCategory(), StudentCategory::SENIOR);
+    EXPECT_EQ(foundSenior->get()->getCategory(), StudentCategory::SENIOR);
 } 

@@ -1,6 +1,7 @@
-#include <iostream>
+#include "Controller.h"
 
 int main() {
-    std::cout << "Hello, Student Registry!" << std::endl;
+    university::Controller app;
+    app.run();
     return 0;
 } 
