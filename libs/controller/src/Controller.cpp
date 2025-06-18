@@ -7,6 +7,7 @@
 #include <chrono>
 #include <future>
 #include <set>
+#include <thread>
 
 namespace university
 {
@@ -287,87 +288,83 @@ namespace university
     {
         std::lock_guard<std::mutex> lock(tableMutex_);
 
-        // Собираем группы
-        std::set<std::string> groups;
+        // Сгруппировать студентов по группам
+        std::map<std::string, std::vector<const Student*>> groupMap;
         for (auto it = studentTable_.begin(); it != studentTable_.end(); ++it)
         {
             auto pair = *it;
-            groups.insert(pair.second->getGroupIndex());
+            groupMap[pair.second->getGroupIndex()].push_back(pair.second.get());
         }
 
         std::map<std::string, double> averages;
         std::mutex averagesMutex;
 
-        // Создаём потоки для каждой группы
+        // Получить количество потоков (ядер)
+        unsigned int numThreads = std::thread::hardware_concurrency();
+        if (numThreads == 0) numThreads = 4; // fallback
+
+        // Собрать все группы в вектор
+        std::vector<std::string> allGroups;
+        for (const auto& [group, _] : groupMap) allGroups.push_back(group);
+
+        size_t groupsPerThread = (allGroups.size() + numThreads - 1) / numThreads;
+
         std::vector<std::future<void>> futures;
-
-        for (const auto &group : groups)
+        for (unsigned int t = 0; t < numThreads; ++t)
         {
-            futures.emplace_back(std::async(std::launch::async, [&, group]()
-                                            {
-            std::vector<double> grades;
-            
-            // Собираем оценки для данной группы
-            for (auto it = studentTable_.begin(); it != studentTable_.end(); ++it) {
-                auto pair = *it;
-                const auto& student = pair.second;
-                
-                if (student->getGroupIndex() != group) continue;
-                
-                switch(student->getCategory()) {
-                    case StudentCategory::JUNIOR:
-                    case StudentCategory::SENIOR:
-                    case StudentCategory::GRADUATE:
-                        break;
-                    default:
-                        break;
-                }
-                
-                switch(student->getCategory()) {
-                    case StudentCategory::JUNIOR: {
-                        const auto& junior = dynamic_cast<const JuniorStudent&>(*student);
-                        for(int grade : junior.getSessionGrades()) {
-                            grades.push_back(static_cast<double>(grade));
+            size_t start = t * groupsPerThread;
+            size_t end = std::min(start + groupsPerThread, allGroups.size());
+            futures.emplace_back(std::async(std::launch::async, [&, start, end]() {
+                for (size_t i = start; i < end; ++i)
+                {
+                    const auto& group = allGroups[i];
+                    const auto& students = groupMap[group];
+                    std::vector<double> grades;
+                    for (const auto* student : students)
+                    {
+                        switch (student->getCategory())
+                        {
+                        case StudentCategory::JUNIOR:
+                        {
+                            const auto& junior = dynamic_cast<const JuniorStudent&>(*student);
+                            for (int grade : junior.getSessionGrades())
+                                grades.push_back(static_cast<double>(grade));
+                            break;
                         }
-                        break;
-                    }
-                    case StudentCategory::SENIOR: {
-                        const auto& senior = dynamic_cast<const SeniorStudent&>(*student);
-                        for(int grade : senior.getSessionGrades()) {
-                            grades.push_back(static_cast<double>(grade));
+                        case StudentCategory::SENIOR:
+                        {
+                            const auto& senior = dynamic_cast<const SeniorStudent&>(*student);
+                            for (int grade : senior.getSessionGrades())
+                                grades.push_back(static_cast<double>(grade));
+                            const auto& work = senior.getResearchWork();
+                            grades.push_back(static_cast<double>(work.supervisorGrade));
+                            grades.push_back(static_cast<double>(work.commissionGrade));
+                            break;
                         }
-                        const auto& work = senior.getResearchWork();
-                        grades.push_back(static_cast<double>(work.supervisorGrade));
-                        grades.push_back(static_cast<double>(work.commissionGrade));
-                        break;
+                        case StudentCategory::GRADUATE:
+                        {
+                            const auto& graduate = dynamic_cast<const GraduateStudent&>(*student);
+                            const auto& project = graduate.getDiplomaProject();
+                            grades.push_back(static_cast<double>(project.supervisorGrade));
+                            grades.push_back(static_cast<double>(project.reviewerGrade));
+                            grades.push_back(static_cast<double>(project.stateCommissionGrade));
+                            break;
+                        }
+                        default:
+                            break;
+                        }
                     }
-                    case StudentCategory::GRADUATE: {
-                        const auto& graduate = dynamic_cast<const GraduateStudent&>(*student);
-                        const auto& project = graduate.getDiplomaProject();
-                        grades.push_back(static_cast<double>(project.supervisorGrade));
-                        grades.push_back(static_cast<double>(project.reviewerGrade));
-                        grades.push_back(static_cast<double>(project.stateCommissionGrade));
-                        break;
+                    if (!grades.empty())
+                    {
+                        double sum = std::accumulate(grades.begin(), grades.end(), 0.0);
+                        double average = sum / grades.size();
+                        std::lock_guard<std::mutex> averagesLock(averagesMutex);
+                        averages[group] = average;
                     }
                 }
-            }
-            
-            // Вычисляем среднее для группы
-            if (!grades.empty()) {
-                double sum = std::accumulate(grades.begin(), grades.end(), 0.0);
-                double average = sum / grades.size();
-                
-                std::lock_guard<std::mutex> averagesLock(averagesMutex);
-                averages[group] = average;
-            } }));
+            }));
         }
-
-        // Ждём завершения всех потоков
-        for (auto &future : futures)
-        {
-            future.wait();
-        }
-
+        for (auto& future : futures) future.wait();
         return averages;
     }
 
@@ -392,6 +389,18 @@ namespace university
         ResearchWork newWork = view_.getNewResearchWork();
         senior.setResearchWork(newWork);
         view_.showMessage("Исследовательская работа успешно изменена.");
+    }
+
+    HashTable<int, std::unique_ptr<Student>>& Controller::getStudentTable()
+    {
+        return studentTable_;
+    }
+
+    void Controller::clearStudentTable()
+    {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        studentTable_ = HashTable<int, std::unique_ptr<Student>>(16);
+        nextId_ = 1;
     }
 
 } // namespace university

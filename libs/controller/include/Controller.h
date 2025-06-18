@@ -31,6 +31,29 @@ namespace university
          */
         void run();
 
+        /**
+         * @brief Получает ссылку на таблицу студентов (для бенчмарка).
+         * @return Ссылка на таблицу студентов.
+         */
+        HashTable<int, std::unique_ptr<Student>>& getStudentTable();
+
+        /**
+         * @brief Очищает таблицу студентов (для бенчмарка).
+         */
+        void clearStudentTable();
+
+        /**
+         * @brief Вычисляет средние оценки для каждой группы (однопоточная версия).
+         * @return Карта индекса группы к средней оценке.
+         */
+        std::map<std::string, double> calculateAverageGradesByGroup();
+
+        /**
+         * @brief Вычисляет средние оценки для каждой группы (многопоточная версия).
+         * @return Карта индекса группы к средней оценке.
+         */
+        std::map<std::string, double> calculateAverageGradesByGroupMultithreaded();
+
     private:
         /**
          * @brief Обрабатывает процесс добавления нового студента.
@@ -76,18 +99,6 @@ namespace university
          * @brief Обрабатывает изменение информации об исследовательской работе.
          */
         void modifyResearchWork();
-
-        /**
-         * @brief Вычисляет средние оценки для каждой группы (однопоточная версия).
-         * @return Карта индекса группы к средней оценке.
-         */
-        std::map<std::string, double> calculateAverageGradesByGroup();
-
-        /**
-         * @brief Вычисляет средние оценки для каждой группы (многопоточная версия).
-         * @return Карта индекса группы к средней оценке.
-         */
-        std::map<std::string, double> calculateAverageGradesByGroupMultithreaded();
 
         /**
          * @brief Обрабатывает отображение средних оценок по группам с выбором режима.
