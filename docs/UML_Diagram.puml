@@ -1,0 +1,201 @@
+@startuml StudentRegistry
+
+package "Model" {
+    
+    enum StudentCategory {
+        JUNIOR
+        SENIOR
+        GRADUATE
+    }
+    
+    struct ResearchWork {
+        + topic: string
+        + place: string
+        + supervisorGrade: int
+        + commissionGrade: int
+    }
+    
+    struct DiplomaProject {
+        + topic: string
+        + place: string
+        + supervisorGrade: int
+        + reviewerGrade: int
+        + stateCommissionGrade: int
+    }
+    
+    abstract class Student {
+        # name: string
+        # groupIndex: string
+        # departmentNumber: int
+        --
+        + Student(name: string, groupIndex: string, deptNum: int)
+        + virtual ~Student()
+        + virtual getCategory(): StudentCategory = 0
+        + virtual printInfo(os: ostream): void
+        + setGroupIndex(newGroup: string): void
+        + getName(): string
+        + getGroupIndex(): string
+        + getDepartmentNumber(): int
+    }
+    
+    class JuniorStudent {
+        - sessionGrades: vector<int>
+        --
+        + JuniorStudent(name: string, groupIndex: string, deptNum: int, grades: vector<int>)
+        + getCategory(): StudentCategory override
+        + printInfo(os: ostream): void override
+        + getSessionGrades(): vector<int>
+        + setSessionGrades(grades: vector<int>): void
+    }
+    
+    class SeniorStudent {
+        - sessionGrades: vector<int>
+        - researchWork: ResearchWork
+        --
+        + SeniorStudent(name: string, groupIndex: string, deptNum: int, grades: vector<int>, work: ResearchWork)
+        + getCategory(): StudentCategory override
+        + printInfo(os: ostream): void override
+        + getSessionGrades(): vector<int>
+        + setSessionGrades(grades: vector<int>): void
+        + getResearchWork(): ResearchWork
+        + setResearchWork(work: ResearchWork): void
+    }
+    
+    class GraduateStudent {
+        - diplomaProject: DiplomaProject
+        --
+        + GraduateStudent(name: string, groupIndex: string, deptNum: int, project: DiplomaProject)
+        + getCategory(): StudentCategory override
+        + printInfo(os: ostream): void override
+        + getDiplomaProject(): DiplomaProject
+        + setDiplomaProject(project: DiplomaProject): void
+    }
+    
+    class HashTable<Key, Value> {
+        - table: vector<Entry>
+        - size: size_t
+        - maxLoadFactor: float
+        --
+        + HashTable(initialCapacity: size_t)
+        + insert(key: Key, value: Value): bool
+        + find(key: Key): optional<reference_wrapper<Value>>
+        + remove(key: Key): bool
+        + size(): size_t
+        + empty(): bool
+        + begin(): Iterator
+        + end(): Iterator
+        - hash(key: Key, tableSize: size_t): size_t
+        - rehash(): void
+    }
+    
+    class Iterator {
+        - current: Entry*
+        --
+        + operator*(): pair<Key, Value>
+        + operator++(): Iterator
+        + operator!=(other: Iterator): bool
+        + operator==(other: Iterator): bool
+    }
+    
+    class ConstIterator {
+        - current: const Entry*
+        --
+        + operator*(): pair<Key, const Value>
+        + operator++(): ConstIterator
+        + operator!=(other: ConstIterator): bool
+        + operator==(other: ConstIterator): bool
+    }
+    
+    Student <|-- JuniorStudent
+    Student <|-- SeniorStudent
+    Student <|-- GraduateStudent
+    
+    SeniorStudent *-- ResearchWork
+    GraduateStudent *-- DiplomaProject
+    
+    HashTable *-- Iterator
+    HashTable *-- ConstIterator
+}
+
+package "View" {
+    
+    class View {
+        --
+        + showMenu(): int
+        + getStudentId(): int
+        + getNewStudentInfo(): unique_ptr<Student>
+        + showStudentInfo(student: const Student): void
+        + showStudentTable(table: const HashTable): void
+        + showMessage(message: string): void
+        + getNewGroupIndex(): string
+        + getNewCategory(): int
+        + showStudentGrades(student: const Student): void
+        + showAverageGradesByGroup(averages: const map<string, double>): void
+        + getAverageCalculationMode(): int
+        + showExecutionTime(mode: int, timeMs: double): void
+        + getNewResearchWork(): ResearchWork
+        + getNewDiplomaProject(): DiplomaProject
+        - clearInputBuffer(): void
+        - promptForCommonInfo(name: string, groupIndex: string, deptNum: int): void
+    }
+}
+
+package "Controller" {
+    
+    class Controller {
+        - view: View
+        - studentTable: HashTable<int, unique_ptr<Student>>
+        - nextId: int
+        - tableMutex: mutex
+        --
+        + Controller()
+        + run(): void
+        - addStudent(): void
+        - findStudent(): void
+        - removeStudent(): void
+        - showAllStudents(): void
+        - changeStudentGroup(): void
+        - transferStudent(): void
+        - showStudentGrades(): void
+        - showAverageGradesByGroup(): void
+        - showAverageGradesByGroupWithChoice(): void
+        - modifyResearchWork(): void
+        - calculateAverageGradesByGroup(): map<string, double>
+        - calculateAverageGradesByGroupMultithreaded(): map<string, double>
+    }
+}
+
+' Связи между пакетами
+Controller *-- View
+Controller *-- HashTable
+Controller ..> Student : uses
+
+' Связи с итераторами
+HashTable --> Iterator : creates
+HashTable --> ConstIterator : creates
+
+' Многопоточность
+note right of Controller
+  Многопоточность:
+  - std::async для параллельных вычислений
+  - std::mutex для синхронизации
+  - Измерение времени выполнения
+end note
+
+' Особенности реализации
+note bottom of HashTable
+  Особенности:
+  - Линейное пробирование
+  - Автоматическое изменение размера
+  - Forward итераторы
+  - O(1) средняя сложность
+end note
+
+note bottom of Student
+  Полиморфная иерархия:
+  - Виртуальные методы
+  - Dynamic casting
+  - Различные типы данных
+end note
+
+@enduml 
