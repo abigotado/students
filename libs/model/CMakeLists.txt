@@ -1,7 +1,10 @@
-add_library(model INTERFACE)
+add_library(model STATIC)
 
-target_include_directories(model INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_include_directories(model PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
-target_sources(model INTERFACE
-    # Add source files here later
+target_sources(model PRIVATE 
+    src/Student.cpp
+    src/JuniorStudent.cpp
+    src/SeniorStudent.cpp
+    src/GraduateStudent.cpp
 ) 
