@@ -5,6 +5,8 @@
 #include "Student.h"
 #include <memory>
 #include <map>
+#include <thread>
+#include <mutex>
 
 namespace university {
 
@@ -74,14 +76,26 @@ private:
     void modifyResearchWork();
 
     /**
-     * @brief Вычисляет средние оценки для каждой группы.
+     * @brief Вычисляет средние оценки для каждой группы (однопоточная версия).
      * @return Карта индекса группы к средней оценке.
      */
     std::map<std::string, double> calculateAverageGradesByGroup();
 
+    /**
+     * @brief Вычисляет средние оценки для каждой группы (многопоточная версия).
+     * @return Карта индекса группы к средней оценке.
+     */
+    std::map<std::string, double> calculateAverageGradesByGroupMultithreaded();
+
+    /**
+     * @brief Обрабатывает отображение средних оценок по группам с выбором режима.
+     */
+    void showAverageGradesByGroupWithChoice();
+
     View view_;
     HashTable<int, std::unique_ptr<Student>> studentTable_;
     int nextId_ = 1; // Следующий доступный ID
+    mutable std::mutex tableMutex_; // Мьютекс для синхронизации доступа к таблице
 };
 
 } // namespace university 

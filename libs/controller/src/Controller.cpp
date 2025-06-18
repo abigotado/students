@@ -4,6 +4,9 @@
 #include "GraduateStudent.h"
 #include <algorithm>
 #include <numeric>
+#include <chrono>
+#include <future>
+#include <set>
 
 namespace university {
 
@@ -36,7 +39,7 @@ void Controller::run() {
                 showStudentGrades();
                 break;
             case 8:
-                showAverageGradesByGroup();
+                showAverageGradesByGroupWithChoice();
                 break;
             case 9:
                 modifyResearchWork();
@@ -53,6 +56,7 @@ void Controller::run() {
 void Controller::addStudent() {
     auto student = view_.getNewStudentInfo();
     if (student) {
+        std::lock_guard<std::mutex> lock(tableMutex_);
         int id = nextId_++;
         studentTable_.insert(id, std::move(student));
         view_.showMessage("Студент успешно добавлен с ID: " + std::to_string(id));
@@ -63,6 +67,7 @@ void Controller::addStudent() {
 
 void Controller::findStudent() {
     int id = view_.getStudentId();
+    std::lock_guard<std::mutex> lock(tableMutex_);
     auto student = studentTable_.find(id);
     if (student) {
         view_.showStudentInfo(*student->get());
@@ -73,6 +78,7 @@ void Controller::findStudent() {
 
 void Controller::removeStudent() {
     int id = view_.getStudentId();
+    std::lock_guard<std::mutex> lock(tableMutex_);
     if (studentTable_.remove(id)) {
         view_.showMessage("Студент с ID " + std::to_string(id) + " успешно удален.");
     } else {
@@ -81,11 +87,13 @@ void Controller::removeStudent() {
 }
 
 void Controller::showAllStudents() {
+    std::lock_guard<std::mutex> lock(tableMutex_);
     view_.showStudentTable(studentTable_);
 }
 
 void Controller::changeStudentGroup() {
     int id = view_.getStudentId();
+    std::lock_guard<std::mutex> lock(tableMutex_);
     auto student = studentTable_.find(id);
     if (!student) {
         view_.showMessage("Студент с ID " + std::to_string(id) + " не найден.");
@@ -99,6 +107,7 @@ void Controller::changeStudentGroup() {
 
 void Controller::transferStudent() {
     int id = view_.getStudentId();
+    std::lock_guard<std::mutex> lock(tableMutex_);
     auto student = studentTable_.find(id);
     if (!student) {
         view_.showMessage("Студент с ID " + std::to_string(id) + " не найден.");
@@ -145,6 +154,7 @@ void Controller::transferStudent() {
 
 void Controller::showStudentGrades() {
     int id = view_.getStudentId();
+    std::lock_guard<std::mutex> lock(tableMutex_);
     auto student = studentTable_.find(id);
     if (student) {
         view_.showStudentGrades(*student->get());
@@ -154,6 +164,33 @@ void Controller::showStudentGrades() {
 }
 
 void Controller::showAverageGradesByGroup() {
+    std::lock_guard<std::mutex> lock(tableMutex_);
+    auto averages = calculateAverageGradesByGroup();
+    view_.showAverageGradesByGroup(averages);
+}
+
+void Controller::showAverageGradesByGroupWithChoice() {
+    int mode = view_.getAverageCalculationMode();
+    
+    auto start = std::chrono::high_resolution_clock::now();
+    
+    std::map<std::string, double> averages;
+    if (mode == 1) {
+        std::lock_guard<std::mutex> lock(tableMutex_);
+        averages = calculateAverageGradesByGroup();
+    } else {
+        averages = calculateAverageGradesByGroupMultithreaded();
+    }
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    double timeMs = duration.count() / 1000.0;
+    
+    view_.showExecutionTime(mode, timeMs);
+    view_.showAverageGradesByGroup(averages);
+}
+
+std::map<std::string, double> Controller::calculateAverageGradesByGroup() {
     std::map<std::string, std::vector<double>> groupGrades;
     
     // Собираем все оценки по группам
@@ -199,19 +236,92 @@ void Controller::showAverageGradesByGroup() {
     std::map<std::string, double> averages;
     for (const auto& [group, grades] : groupGrades) {
         if (!grades.empty()) {
-            double sum = 0.0;
-            for (double grade : grades) {
-                sum += grade;
-            }
+            double sum = std::accumulate(grades.begin(), grades.end(), 0.0);
             averages[group] = sum / grades.size();
         }
     }
     
-    view_.showAverageGradesByGroup(averages);
+    return averages;
+}
+
+std::map<std::string, double> Controller::calculateAverageGradesByGroupMultithreaded() {
+    std::lock_guard<std::mutex> lock(tableMutex_);
+    
+    // Собираем группы
+    std::set<std::string> groups;
+    for (auto it = studentTable_.begin(); it != studentTable_.end(); ++it) {
+        auto pair = *it;
+        groups.insert(pair.second->getGroupIndex());
+    }
+    
+    std::map<std::string, double> averages;
+    std::mutex averagesMutex;
+    
+    // Создаём потоки для каждой группы
+    std::vector<std::future<void>> futures;
+    
+    for (const auto& group : groups) {
+        futures.emplace_back(std::async(std::launch::async, [&, group]() {
+            std::vector<double> grades;
+            
+            // Собираем оценки для данной группы
+            for (auto it = studentTable_.begin(); it != studentTable_.end(); ++it) {
+                auto pair = *it;
+                const auto& student = pair.second;
+                
+                if (student->getGroupIndex() != group) continue;
+                
+                switch(student->getCategory()) {
+                    case StudentCategory::JUNIOR: {
+                        const auto& junior = dynamic_cast<const JuniorStudent&>(*student);
+                        for(int grade : junior.getSessionGrades()) {
+                            grades.push_back(static_cast<double>(grade));
+                        }
+                        break;
+                    }
+                    case StudentCategory::SENIOR: {
+                        const auto& senior = dynamic_cast<const SeniorStudent&>(*student);
+                        for(int grade : senior.getSessionGrades()) {
+                            grades.push_back(static_cast<double>(grade));
+                        }
+                        const auto& work = senior.getResearchWork();
+                        grades.push_back(static_cast<double>(work.supervisorGrade));
+                        grades.push_back(static_cast<double>(work.commissionGrade));
+                        break;
+                    }
+                    case StudentCategory::GRADUATE: {
+                        const auto& graduate = dynamic_cast<const GraduateStudent&>(*student);
+                        const auto& project = graduate.getDiplomaProject();
+                        grades.push_back(static_cast<double>(project.supervisorGrade));
+                        grades.push_back(static_cast<double>(project.reviewerGrade));
+                        grades.push_back(static_cast<double>(project.stateCommissionGrade));
+                        break;
+                    }
+                }
+            }
+            
+            // Вычисляем среднее для группы
+            if (!grades.empty()) {
+                double sum = std::accumulate(grades.begin(), grades.end(), 0.0);
+                double average = sum / grades.size();
+                
+                std::lock_guard<std::mutex> lock(averagesMutex);
+                averages[group] = average;
+            }
+        }));
+    }
+    
+    // Ждём завершения всех потоков
+    for (auto& future : futures) {
+        future.wait();
+    }
+    
+    return averages;
 }
 
 void Controller::modifyResearchWork() {
     int id = view_.getStudentId();
+    std::lock_guard<std::mutex> lock(tableMutex_);
     auto student = studentTable_.find(id);
     if (!student) {
         view_.showMessage("Студент с ID " + std::to_string(id) + " не найден.");

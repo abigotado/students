@@ -273,4 +273,27 @@ DiplomaProject View::getNewDiplomaProject() {
     return project;
 }
 
+int View::getAverageCalculationMode() {
+    std::cout << "\nВыберите режим вычисления средних оценок:\n";
+    std::cout << "1. Однопоточный режим\n";
+    std::cout << "2. Многопоточный режим\n";
+    std::cout << "Введите ваш выбор: ";
+    int choice;
+    std::cin >> choice;
+    while(std::cin.fail() || choice < 1 || choice > 2) {
+        std::cout << "Неверный ввод. Пожалуйста, введите 1 или 2." << std::endl;
+        std::cin.clear();
+        clearInputBuffer();
+        std::cin >> choice;
+    }
+    clearInputBuffer();
+    return choice;
+}
+
+void View::showExecutionTime(int mode, double timeMs) {
+    std::string modeStr = (mode == 1) ? "однопоточном" : "многопоточном";
+    std::cout << "Время выполнения в " << modeStr << " режиме: " 
+              << std::fixed << std::setprecision(3) << timeMs << " мс" << std::endl;
+}
+
 } // namespace university 

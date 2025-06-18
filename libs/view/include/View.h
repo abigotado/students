@@ -74,6 +74,19 @@ public:
     void showAverageGradesByGroup(const std::map<std::string, double>& averages);
 
     /**
+     * @brief Запрашивает выбор режима вычисления средних оценок.
+     * @return 1 для однопоточного режима, 2 для многопоточного.
+     */
+    int getAverageCalculationMode();
+
+    /**
+     * @brief Отображает информацию о времени выполнения.
+     * @param mode Режим выполнения (1 - однопоточный, 2 - многопоточный).
+     * @param timeMs Время выполнения в миллисекундах.
+     */
+    void showExecutionTime(int mode, double timeMs);
+
+    /**
      * @brief Запрашивает информацию о новой исследовательской работе.
      * @return Детали новой исследовательской работы.
      */
