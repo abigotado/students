@@ -175,32 +175,38 @@ public:
             rehash();
         }
 
-        size_t index = hash(key, table_.size());
-        size_t startIndex = index;
-
-        size_t firstDeleted = -1;
-
-        do {
-            if (table_[index].deleted && firstDeleted == (size_t)-1) {
+        size_t firstDeleted = SIZE_MAX;
+        
+        // Линейное пробирование
+        for (size_t i = 0; i < table_.size(); ++i) {
+            size_t index = (hash(key, table_.size()) + i) % table_.size();
+            
+            if (table_[index].deleted && firstDeleted == SIZE_MAX) {
                 firstDeleted = index;
             }
-
-            if (!table_[index].occupied) {
-                size_t insert_pos = (firstDeleted != (size_t)-1) ? firstDeleted : index;
+            
+            if (table_[index].key == key && !table_[index].deleted) {
+                return false; // Ключ уже существует
+            }
+            
+            if (!table_[index].occupied && !table_[index].deleted) {
+                size_t insert_pos = (firstDeleted != SIZE_MAX) ? firstDeleted : index;
                 table_[insert_pos].key = key;
                 table_[insert_pos].value = std::move(value);
                 table_[insert_pos].occupied = true;
                 table_[insert_pos].deleted = false;
                 size_++;
+                
+                // Проверяем коэффициент загрузки
+                if (static_cast<float>(size_) / table_.size() > maxLoadFactor_) {
+                    rehash();
+                }
                 return true;
             }
-            if (table_[index].key == key && !table_[index].deleted) {
-                return false; // Ключ уже существует
-            }
-            index = (index + 1) % table_.size();
-        } while (index != startIndex);
+        }
         
-        if (firstDeleted != (size_t)-1) {
+        // Если нашли удалённую позицию, используем её
+        if (firstDeleted != SIZE_MAX) {
              table_[firstDeleted].key = key;
              table_[firstDeleted].value = std::move(value);
              table_[firstDeleted].occupied = true;

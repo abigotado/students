@@ -53,9 +53,9 @@ public:
 
     /**
      * @brief Устанавливает информацию о дипломном проекте студента.
-     * @param diplomaProject Новые детали дипломного проекта.
+     * @param project Новые детали дипломного проекта.
      */
-    void setDiplomaProject(const DiplomaProject& diplomaProject);
+    void setDiplomaProject(const DiplomaProject& project);
 
 private:
     DiplomaProject diplomaProject_;

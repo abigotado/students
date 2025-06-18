@@ -163,3 +163,44 @@ students/
 ## Лицензия
 
 Этот проект создан в образовательных целях.
+
+## Анализ кода
+
+Проект включает настройки для статического и динамического анализа кода:
+
+### Статический анализ
+- **Компиляторные предупреждения**: Включены все предупреждения (-Wall -Wextra -Wpedantic)
+- **Clang Static Analyzer**: Автоматический анализ при компиляции
+- **cppcheck**: Дополнительный статический анализ (опционально)
+
+### Динамический анализ
+- **Address Sanitizer**: Обнаружение утечек памяти и ошибок доступа
+- **Thread Sanitizer**: Обнаружение race conditions в многопоточном коде
+
+### Запуск анализа
+```bash
+# Полный анализ кода
+./scripts/analysis.sh
+
+# Или по отдельности:
+mkdir build_analysis && cd build_analysis
+
+# Статический анализ
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+make
+
+# Анализ утечек памяти
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_ADDRESS_SANITIZER=ON
+make
+./tests/run_tests
+
+# Анализ многопоточности
+cmake .. -DCMAKE_BUILD_TYPE=Debug -DENABLE_THREAD_SANITIZER=ON
+make
+./tests/run_tests
+```
+
+### Результаты анализа
+- Отсутствие утечек памяти подтверждено Address Sanitizer
+- Отсутствие race conditions подтверждено Thread Sanitizer
+- Код проходит все проверки статического анализатора
